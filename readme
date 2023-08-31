@@ -3,6 +3,7 @@ This repo have MVVM Design Pattern exercise applications which ones have combine
 Exercise 1 is a basic API data windowing application, 
 Exercise 2 is a Web API based get and post cabailities application, 
 Exercise 3 is a basic weather app which one is connected with openweatherAPI.
+Exercise 4 is a really basic application, it has include API, MVVM Design Pattern and Binding application. 
 
 Binding folder; this folder has include binding exercise and explains how it works and what is the main idea of binding.
 
