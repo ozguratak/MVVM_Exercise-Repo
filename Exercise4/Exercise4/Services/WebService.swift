@@ -39,7 +39,14 @@ enum NetworkError: Error {
 }
 
 struct URLService {
-    var baseLink: String = ""
-    var apiKey: String = "1297BA6F-3D89-4178-A8D7-FC32A0A4D124"
-    var listingQuery: String = ""
+    var baseLink: String = "https://raw.githubusercontent.com/"
+    var userName: String = "atilsamancioglu/"
+    var query: String = "K21-JSONDataSet/master/crypto.json"
+    
+    static func urlGenerator() -> URL {
+        if let url = URL(string: URLService().baseLink + URLService().userName + URLService().query) {
+            return url
+        }
+        return urlGenerator()
+    }
 }
