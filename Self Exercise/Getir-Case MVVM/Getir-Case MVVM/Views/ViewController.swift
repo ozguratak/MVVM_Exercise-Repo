@@ -12,31 +12,34 @@ class ViewController: UIViewController, ProductListViewModelDelegate {
     
     func dataDidLoad() {
        self.productList.reloadData()
+        self.loading.stopAnimating()
         print("delegate çalıştı")
     }
     
     private let propductListVM = ProductListViewModel()
     
-    private let productList: UICollectionView = {
-        let listViewFlowLayout = UICollectionViewFlowLayout()
-        let listView = UICollectionView(frame: .zero, collectionViewLayout: listViewFlowLayout)
-        listView.translatesAutoresizingMaskIntoConstraints = false
-        listViewFlowLayout.sectionInset = UIEdgeInsets(top: 50, left: 16, bottom: 50, right: 16)
-        listViewFlowLayout.itemSize = CGSize(width: 80, height: 80)
-        listViewFlowLayout.scrollDirection = .vertical
-        listView.backgroundColor = .brown
-        listView.register(CollectionViewCell.self, forCellWithReuseIdentifier: "\(CollectionViewCell.self)")
-        listView.layer.cornerRadius = 12
-        return listView
+    private let productList: UITableView = {
+        let list = UITableView()
+        list.register(UINib(nibName: String(describing: ProductTableViewCell.self), bundle: nil), forCellReuseIdentifier: String(describing: ProductTableViewCell.self)) 
+        list.translatesAutoresizingMaskIntoConstraints = false
+        list.backgroundColor = .brown
+        return list
+    }()
+    
+    private let loading: UIActivityIndicatorView = {
+        let loadingIcon = UIActivityIndicatorView()
+        loadingIcon.color = UIColor.darkGray
+        loadingIcon.translatesAutoresizingMaskIntoConstraints = false
+        loadingIcon.style = .large
+        loadingIcon.hidesWhenStopped = true
+        return loadingIcon
     }()
     
     private let cartButton: UIButton = {
        let button = UIButton()
         button.backgroundColor = .systemBlue
-        
         button.translatesAutoresizingMaskIntoConstraints = false
         button.setTitle("Go to Cart", for: .normal)
-        
         button.setTitleColor(.white, for: .normal)
         button.heightAnchor.constraint(equalToConstant: 60).isActive = true
         button.layer.cornerRadius = 12
@@ -46,22 +49,23 @@ class ViewController: UIViewController, ProductListViewModelDelegate {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        propductListVM.delegate = self
+        loading.startAnimating()
+        propductListVM.getProductListFromUrl()
         productList.delegate = self
         productList.dataSource = self
-        propductListVM.getProductListFromUrl()
+        view.addSubview(productList)
+        view.addSubview(loading)
+        view.addSubview(cartButton)
+        propductListVM.delegate = self
     }
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        
-        view.addSubview(productList)
-        view.addSubview(cartButton)
         setupUI()
-        
     }
     
     func setupUI() {
+        
         productList.translatesAutoresizingMaskIntoConstraints = false
                 NSLayoutConstraint.activate([
                     productList.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
@@ -75,8 +79,14 @@ class ViewController: UIViewController, ProductListViewModelDelegate {
                     cartButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -32),
                     cartButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -8)
                 ])
+        
+        NSLayoutConstraint.activate([
+            loading.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            loading.centerYAnchor.constraint(equalTo: view.centerYAnchor)
+        ])
         cartButton.addTarget(self, action: #selector(buttonAction), for: .touchUpInside)
         cartButton.setImage(UIImage(systemName: "Cart"), for: .normal)
+        
             }
     
     @objc func buttonAction() {
@@ -87,28 +97,29 @@ class ViewController: UIViewController, ProductListViewModelDelegate {
     }
 }
 
-
-
-extension ViewController: UICollectionViewDelegate, UICollectionViewDataSource {
-    func numberOfSections(in collectionView: UICollectionView) -> Int {
-        return 1
-    }
-    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+extension ViewController: UITableViewDelegate, UITableViewDataSource {
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return propductListVM.products.count
     }
-
-    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let vm = propductListVM.productsViewModel(at: indexPath.row)
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "\(CollectionViewCell.self)", for: indexPath) as! CollectionViewCell
-        cell.configure(with: vm)
-            return cell
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: String(describing: ProductTableViewCell.self), for: indexPath) as! ProductTableViewCell
+        cell.configureCell(product: propductListVM.productsViewModel(at: indexPath.row))
+        return cell
+        
     }
-
-    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        if let detailVC = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: String(describing: ProductDetailViewController.self)) as? ProductDetailViewController {
-            detailVC.vm = propductListVM.productsViewModel(at: indexPath.row)
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        
+       if let detailVC = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: String(describing: ProductDetailViewController.self)) as? ProductDetailViewController {
             self.navigationController?.pushViewController(detailVC, animated: true)
+           detailVC.vm = propductListVM.productsViewModel(at: indexPath.row)
+          
         }
+        
     }
+    
+    
+    
 
 }
